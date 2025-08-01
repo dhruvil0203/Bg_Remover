@@ -10,7 +10,7 @@ const connectDB = async () => {
       console.log("MongoDB connected successfully");
     });
 
-    await mongoose.connect(`${process.env.MONGODB_URI}/Bg_Removal`);
+    await mongoose.connect(`${process.env.MONGODB_URI}/Bg_removal`);
   } catch (error) {
     console.error("MongoDB connection error:", error);
     throw new Error("MongoDB connection failed");

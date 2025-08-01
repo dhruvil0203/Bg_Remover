@@ -1,14 +1,6 @@
 import { Webhook } from "svix";
 import userModel from "../models/userModel.js";
 
-// IMPORTANT: To make webhook verification work, you need to get the raw request body.
-// If you are using Express, you should use this middleware *before* your webhook handler route:
-//
-// app.post('/api/webhooks/clerk', express.raw({type: 'application/json'}), clerkWebHooks);
-//
-// Do NOT use express.json() for the webhook route, as it will parse the body and
-// prevent the svix.verify function from working.
-
 const clerkWebHooks = async (req, res) => {
   try {
     // Check if the 'svix-id' header is present
