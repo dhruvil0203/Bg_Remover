@@ -1,32 +1,24 @@
 import { Webhook } from "svix";
-import { headers } from "next/headers";
-import userModel from "../models/userModel";
+import userModel from "../models/userModel.js";
 
-export const clerkWebhookHandler = async (req, res) => {
+export const clerkWebHooks = async (req, res) => {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
   if (!WEBHOOK_SECRET) {
-    throw new Error(
-      "Please add CLERK_WEBHOOK_SECRET from Clerk Dashboard to .env or .env.local"
-    );
+    console.error("CLERK_WEBHOOK_SECRET is not set in environment variables.");
+    return res.status(500).send("Server configuration error.");
   }
 
-  const headerPayload = headers();
-  const svix_id = headerPayload.get("svix-id");
-  const svix_timestamp = headerPayload.get("svix-timestamp");
-  const svix_signature = headerPayload.get("svix-signature");
+  const svix_id = req.headers["svix-id"];
+  const svix_timestamp = req.headers["svix-timestamp"];
+  const svix_signature = req.headers["svix-signature"];
 
   if (!svix_id || !svix_timestamp || !svix_signature) {
-    return new Response("Error occured -- no svix headers", {
-      status: 400,
-    });
+    return res.status(400).send("Error: Missing required Svix headers.");
   }
 
-  const payload = await req.json();
-  const body = JSON.stringify(payload);
-
+  const body = req.body;
   const wh = new Webhook(WEBHOOK_SECRET);
-
   let evt;
 
   try {
@@ -36,10 +28,8 @@ export const clerkWebhookHandler = async (req, res) => {
       "svix-signature": svix_signature,
     });
   } catch (err) {
-    console.error("Error verifying webhook:", err);
-    return new Response("Error occured", {
-      status: 400,
-    });
+    console.error("Error verifying webhook:", err.message);
+    return res.status(400).send("Error: Webhook verification failed.");
   }
 
   const eventType = evt.type;
@@ -59,9 +49,9 @@ export const clerkWebhookHandler = async (req, res) => {
       await userModel.create(newUser);
     } catch (error) {
       console.error("Error creating user in MongoDB:", error);
-      return new Response("Error creating user", { status: 500 });
+      return res.status(500).send("Error saving user to database.");
     }
   }
 
-  return new Response("", { status: 200 });
+  return res.status(200).send("Webhook processed successfully.");
 };
